@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: spring-ai-image-extension
+  # 配置环境
+  profiles:
+    active: local
+  ai:
+    openai:
+      # OpenAI API密钥，从环境变量SPRING_AI_OPENAI_API_KEY获取
+      api-key: ${SPRING_AI_OPENAI_API_KEY}
+      # OpenAI API基础URL，从环境变量SPRING_AI_OPENAI_BASE_URL获取
+      base-url: ${SPRING_AI_OPENAI_BASE_URL}
+      image:
+        options:
+          # 指定用于图像生成的模型为Qwen/Qwen-Image
+          model: Qwen/Qwen-Image
+          # 设置生成图像的尺寸为1328x1328像素，注意，具体参数根据自身选择厂商提供的API文档为准
+          size: 1328x1328
