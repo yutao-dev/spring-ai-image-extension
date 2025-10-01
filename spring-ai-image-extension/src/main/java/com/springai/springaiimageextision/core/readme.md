@@ -584,6 +584,8 @@ void testModel() throws IOException {
 
 EnhancedImageClient 的设计将参考 ChatClient 的封装逻辑，包括但不限于链式调用封装、提示词优化等特性，以提供更加流畅和直观的开发体验。
 
+EnhancedImageClient 在源文档中并没有设计，这是额外的设计。
+
 ### 3.2 初步构建
 
 EnhancedImageClient 的初步构建将从基础的链式调用功能开始实现：
@@ -671,3 +673,22 @@ void testClient() throws IOException {
 经过测试，方法均可跑通。
 
 **至此，EnhancedImageClient 的初步构建和链式调用功能已实现，接下来，我们将继续完善功能，添加更多特性。**
+
+**这里我们放出一张架构图，向大家展示我们目前的抽象层级结构**
+```markdown
++-----------------------------+
+|     EnhancedImageClient     |
++-------------+---------------+
+              |
++-------------v---------------+
+|     EnhancedImageModel      |
++-------------+---------------+
+              |
++-------------v---------------+
+|     EnhancedImageOptions    |
++-------------+---------------+
+              |
++-------------v---------------+
+|     EnhancedImageApi        |
++-----------------------------+
+```
