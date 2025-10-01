@@ -15,8 +15,6 @@ import org.springframework.ai.image.ImageOptions;
  * OpenAI 图像API选项。OpenAiImageOptions.java
  *
  * @author 王玉涛
- * @author Mark Pollack
- * @author Christian Tzolov
  * @since 0.8.0
  *
  */
