@@ -2,6 +2,9 @@ package com.springai.springaiimageextision.core.custom.model;
 
 import java.util.List;
 
+import com.springai.springaiimageextision.core.custom.api.EnhancedImageApi;
+import com.springai.springaiimageextision.core.custom.option.EnhancedImageOptions;
+import com.springai.springaiimageextision.core.util.BeanUtils;
 import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +46,7 @@ public class EnhancedImageModel implements ImageModel {
 	/**
 	 * 用于图像完成请求的默认选项。
 	 */
-	private final OpenAiImageOptions defaultOptions;
+	private final EnhancedImageOptions defaultOptions;
 
 	/**
 	 * 用于重试 OpenAI 图像 API 调用的重试模板。
@@ -53,7 +56,7 @@ public class EnhancedImageModel implements ImageModel {
 	/**
 	 * 对 OpenAI 图像 API 的低级访问。
 	 */
-	private final OpenAiImageApi openAiImageApi;
+	private final EnhancedImageOptions openAiImageApi;
 
 	/**
 	 * 用于仪器仪表的观察注册表。
@@ -86,18 +89,18 @@ public class EnhancedImageModel implements ImageModel {
 
 	/**
 	 * 初始化 OpenAiImageModel 的新实例。
-	 * @param openAiImageApi 用于与 OpenAI 图像 API 交互的 OpenAiImageApi 实例。
+	 * @param imageApi 用于与 OpenAI 图像 API 交互的 OpenAiImageApi 实例。
 	 * @param options 用于配置图像模型的 OpenAiImageOptions。
 	 * @param retryTemplate 重试模板。
 	 * @param observationRegistry 用于仪器仪表的 ObservationRegistry。
 	 */
-	public EnhancedImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate,
+	public EnhancedImageModel(EnhancedImageApi imageApi, EnhancedImageOptions options, RetryTemplate retryTemplate,
 							  ObservationRegistry observationRegistry) {
-		Assert.notNull(openAiImageApi, "OpenAiImageApi 不能为空");
+		Assert.notNull(imageApi, "OpenAiImageApi 不能为空");
 		Assert.notNull(options, "options 不能为空");
 		Assert.notNull(retryTemplate, "retryTemplate 不能为空");
 		Assert.notNull(observationRegistry, "observationRegistry 不能为空");
-		this.openAiImageApi = openAiImageApi;
+		this.openAiImageApi = imageApi;
 		this.defaultOptions = options;
 		this.retryTemplate = retryTemplate;
 		this.observationRegistry = observationRegistry;
@@ -107,9 +110,7 @@ public class EnhancedImageModel implements ImageModel {
 	public ImageResponse call(ImagePrompt imagePrompt) {
 		// 在继续之前，构建最终的请求 ImagePrompt，
 		// 合并运行时和默认选项。
-		ImagePrompt requestImagePrompt = buildRequestImagePrompt(imagePrompt);
-
-		OpenAiImageApi.OpenAiImageRequest imageRequest = createRequest(requestImagePrompt);
+		EnhancedImageOptions imageOptions = mergeOptions(imagePrompt);
 
 		var observationContext = ImageModelObservationContext.builder()
 			.imagePrompt(imagePrompt)
@@ -129,6 +130,37 @@ public class EnhancedImageModel implements ImageModel {
 
 				return imageResponse;
 			});
+	}
+
+	/**
+	 * 合并运行时和默认选项。
+	 * @param imagePrompt 提示
+	 * @return 合并后的选项
+	 */
+	private EnhancedImageOptions mergeOptions(ImagePrompt imagePrompt) {
+		String prompt = imagePrompt.getInstructions().get(0).getText();
+		EnhancedImageOptions enhancedImageOptions = (EnhancedImageOptions) imagePrompt.getOptions();
+
+		String defaultPrompt = BeanUtils.nullThenChooseOther(prompt, options.getPrompt(), String.class);
+
+		return EnhancedImageOptions.builder()
+				.prompt(BeanUtils.nullThenChooseOther(defaultPrompt, this.defaultOptions.getPrompt(), String.class))
+				.image(enhancedImageOptions.getImage())
+				.n(BeanUtils.nullThenChooseOther(enhancedImageOptions.getN(), this.defaultOptions.getN(), Integer.class))
+				.size(BeanUtils.nullThenChooseOther(enhancedImageOptions.getSize(), this.defaultOptions.getSize(), String.class))
+				.model(BeanUtils.nullThenChooseOther(enhancedImageOptions.getModel(), this.defaultOptions.getModel(), String.class))
+				.height(BeanUtils.nullThenChooseOther(enhancedImageOptions.getHeight(), this.defaultOptions.getHeight(), Integer.class))
+				.style(BeanUtils.nullThenChooseOther(enhancedImageOptions.getStyle(), this.defaultOptions.getStyle(), String.class))
+				.width(BeanUtils.nullThenChooseOther(enhancedImageOptions.getWidth(), this.defaultOptions.getWidth(), Integer.class))
+				.responseFormat(BeanUtils.nullThenChooseOther(enhancedImageOptions.getResponseFormat(), this.defaultOptions.getResponseFormat(), String.class))
+				.quality(BeanUtils.nullThenChooseOther(enhancedImageOptions.getQuality(), this.defaultOptions.getQuality(), String.class))
+				.user(BeanUtils.nullThenChooseOther(enhancedImageOptions.getUser(), this.defaultOptions.getUser(), String.class))
+				.negativePrompt(BeanUtils.nullThenChooseOther(enhancedImageOptions.getNegativePrompt(), this.defaultOptions.getNegativePrompt(), String.class))
+				.seed(BeanUtils.nullThenChooseOther(enhancedImageOptions.getSeed(), this.defaultOptions.getSeed(), Long.class))
+				.guidanceScale(BeanUtils.nullThenChooseOther(enhancedImageOptions.getGuidanceScale(), this.defaultOptions.getGuidanceScale(), Integer.class))
+				.inferenceSteps(BeanUtils.nullThenChooseOther(enhancedImageOptions.getInferenceSteps(), this.defaultOptions.getInferenceSteps(), Integer.class))
+				.cfg(BeanUtils.nullThenChooseOther(enhancedImageOptions.getCfg(), this.defaultOptions.getCfg(), String.class))
+				.build();
 	}
 
 	private OpenAiImageApi.OpenAiImageRequest createRequest(ImagePrompt imagePrompt) {

@@ -118,4 +118,12 @@ SpringAI 项目原生功能并未包含图像生成功能，如需扩展其他�
 1. 我们从[github仓库的源码地址](https://github.com/spring-projects/spring-ai/blob/1.0.0/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiImageModel.java)中，将源代码复制到本项目中
 2. 翻译注释
 3. 修改类名为`EnhancedImageModel`
+
+#### 2.3.3 改造思路
+1. 我们在[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)中已经进行了改造分析
+2. 需要去除冗余的深拷贝，即`ImagePrompt requestImagePrompt = buildRequestImagePrompt(imagePrompt);`，因为这里本质是直接的参数合并，默认是自定义参数覆盖默认参数
+3. 以及`OpenAiImageApi.OpenAiImageRequest imageRequest = createRequest(requestImagePrompt);`, 这里是创建请求的逻辑，因为我们已经将ImageOptions作为直接的参数请求，因此我们也需要修改这里
+4. 将上述的两处代码进行合并，即ImagePrompt优先与自定义参数合并，自定义参数再与默认参数合并，创建请求的逻辑也只需要ImageOptions作为参数即可
+5. 我们将这里的参数合并，封装为工具类方法，即`BeanUtils.nullChooseOther(Object defaultValue, Object value, Class<?> clazz)`
+6. 其他的地方也需要进行修改，例如修改OpenAiImageApi、OpenAiImageOptions类，修改成自定义的类，并修改相应的构造函数，只需要根据检查报错修改即可
    
