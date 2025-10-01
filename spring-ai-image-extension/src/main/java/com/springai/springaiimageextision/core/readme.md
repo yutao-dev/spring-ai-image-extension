@@ -261,160 +261,318 @@ SpringAI 项目原生功能并未包含图像生成功能，如需扩展其他�
 **至此，ImageOptions 层改造工作已完成。**
 
 ### 2.3 ImageModel 层改造
+
 #### 2.3.1 前言
-1. 在之前我们已经进行了Api与Options层的改造，本章节我们将围绕ImageModel进行改造，围绕ImageModel.call()方法进行
-2. 有关这一部分的源码阅读以及改造流程的思路梳理，可以移步并参考[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)的6.4章节
-3. 源文档给出了详细的源码阅读方法论梳理，并给出详细的改造步骤以及踩坑记录，我们将根据源文档，将流程梳理成一步到位的方法，并给出相应的代码实现
+
+1. 在前面的章节中，我们已经完成了 API 层和 Options 层的改造工作。本章节将重点对 ImageModel 层进行改造，主要围绕 `ImageModel.call()` 方法展开。
+2. 关于这部分的源码分析和改造思路，可以参考[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)第 6.4 节的内容。
+3. 源文档提供了详细的源码阅读方法论和改造步骤，并记录了相关注意事项。我们将基于源文档的指导，将改造流程梳理为一套高效、清晰的方法，并提供相应的代码实现。
 
 #### 2.3.2 源码复制
-1. 我们从[github仓库的源码地址](https://github.com/spring-projects/spring-ai/blob/1.0.0/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiImageModel.java)中，将源代码复制到本项目中
-2. 翻译注释
-3. 修改类名为`EnhancedImageModel`
+
+1. 从 [GitHub 仓库地址](https://github.com/spring-projects/spring-ai/blob/1.0.0/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiImageModel.java) 获取原始源码并复制到项目中。
+2. 翻译注释内容，确保代码可读性。
+3. 将类名修改为 `EnhancedImageModel`，以符合项目命名规范。
 
 #### 2.3.3 改造思路
-1. 我们在[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)中已经进行了改造分析
-2. 需要去除冗余的深拷贝，即`ImagePrompt requestImagePrompt = buildRequestImagePrompt(imagePrompt);`，因为这里本质是直接的参数合并，默认是自定义参数覆盖默认参数
-3. 以及`OpenAiImageApi.OpenAiImageRequest imageRequest = createRequest(requestImagePrompt);`, 这里是创建请求的逻辑，因为我们已经将ImageOptions作为直接的参数请求，因此我们也需要修改这里
-4. 将上述的两处代码进行合并，即ImagePrompt优先与自定义参数合并，自定义参数再与默认参数合并，创建请求的逻辑也只需要ImageOptions作为参数即可
-5. 我们将这里的参数合并，封装为工具类方法，即`BeanUtils.nullChooseOther(Object defaultValue, Object value, Class<?> clazz)`
-6. 其他的地方也需要进行修改，例如修改OpenAiImageApi、OpenAiImageOptions类，修改成自定义的类，并修改相应的构造函数，只需要根据检查报错修改即可
 
-至此，我们成功改造了ImageModel层
+1. 我们已在[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)中完成了详细的改造分析。
+2. 需要移除冗余的深拷贝操作：`ImagePrompt requestImagePrompt = buildRequestImagePrompt(imagePrompt);`，因为本质上这是参数合并的过程，默认规则是自定义参数覆盖默认参数。
+3. 同时需要调整 `OpenAiImageApi.OpenAiImageRequest imageRequest = createRequest(requestImagePrompt);` 的逻辑，由于我们已将 `ImageOptions` 作为直接请求参数，因此也需要相应修改。
+4. 将上述两个步骤合并：优先使用 ImagePrompt 中的参数，其次使用自定义参数，最后使用默认参数；同时简化请求创建逻辑，使其仅依赖 `ImageOptions`。
+5. 为了更好地管理参数合并逻辑，我们将封装一个工具方法 `BeanUtils.nullChooseOther(Object defaultValue, Object value, Class<?> clazz)` 来处理参数优先级。
+6. 其他部分也需要同步修改，例如将 `OpenAiImageApi` 和 `OpenAiImageOptions` 类替换为我们自定义的类，并更新相关的构造函数。只需根据编译错误进行相应调整即可。
+
+至此，我们成功完成了 ImageModel 层的改造工作。
 
 #### 2.3.4 单元测试
-1. 我们此次的单元测试，沿用上一章节的测试流程，依旧是测试文生图+图生图
-2. 但是这一次我们通过设计不同的ImagePrompt，来测试其Prompt的优先级顺序是否是最高的
-3. 而对于运行时参数与默认参数的优先级顺序，我们通过手动构造并注入Bean实例，来测试是优先级是否正确
-4. 我们通过创建ImageOptionsProperties，构造并注入Bean实例，来测试参数的优先级顺序是否正确
-5. 参数示例
-   ```java
-   /**
-    * @author 王玉涛
-    * @version 1.0
-    * @since 2025/10/1
-    */
-   @Data
-   @Configuration
-   @ConfigurationProperties("ai.enhanced.image.options")
-   public class ImageOptionsProperties {
-      /**
-       * 生成图像的数量
-       * 对应 OpenAI API 的 'n' 参数
-       */
-      private Integer n;
-   
-      /**
-       * 使用的模型名称
-       */
-      private String model;
-   
-      /**
-       * 图像宽度（像素）
-       * 对应 OpenAI API 的 'size_width' 参数
-       */
-      private Integer width;
-   
-      /**
-       * 图像高度（像素）
-       * 对应 OpenAI API 的 'size_height' 参数
-       */
-      private Integer height;
-   
-      /**
-       * 图像质量设置
-       * 可选值：standard、hd
-       */
-      private String quality;
-   
-      /**
-       * 响应格式
-       * 可选值：url、b64_json
-       * 对应 OpenAI API 的 'response_format' 参数
-       */
-      private String responseFormat;
-   
-      /**
-       * 图像尺寸规格
-       * 格式："{width}x{height}"，例如 "1024x1024"
-       * 对应 OpenAI API 的 'size' 参数
-       */
-      private String size;
-   
-      /**
-       * 图像风格
-       * 可选值：vivid、natural
-       * 对应 OpenAI API 的 'style' 参数
-       */
-      private String style;
-   
-      /**
-       * 用户标识符
-       * 用于违规监控和滥用检测
-       * 对应 OpenAI API 的 'user' 参数
-       */
-      private String user;
-   
-      /**
-       * 自定义字段，注意：该字段需要与厂商的需求对齐
-       * 通常用于指定参考图像或蒙版图像
-       */
-      private String image;
-   
-      /**
-       * 自定义字段，用于文本提示词发送
-       * 图像生成的主要描述文本
-       */
-      private String prompt;
-   
-   
-      /**
-       * 反向提示词，表示不希望出现的元素
-       */
-      private String negativePrompt;
-   
-      /**
-       * 自定义字段，用于指定种子值，用于结果复现，相同的seed会有相似的输出
-       */
-      private Long seed;
-   
-      /**
-       * 自定义字段，用于指定 guidance scale，用于控制生成图像的随机性，值越高则生成图像越严格
-       */
-      private Integer guidanceScale;
-   
-      /**
-       * 自定义字段，用于指定 cfg，影响图文一致性，值越高则生成图像越有个性化，建议≥4.0
-       */
-      private String cfg;
-   
-      /**
-       * 自定义字段，用于指定推理步骤数，用于控制生成图像的随机性，值越高则生成图像越随机
-       */
-      private Integer inferenceSteps;
-   }
-   ```
-6. yaml配置文件示例
-   ```yaml
-   ai:
-     enhanced:
-       image:
-         options:
-           # 指定用于增强图像生成的模型为Qwen/Qwen-Image
-           model: Qwen/Qwen-Image
-           # 设置生成图像的尺寸为1328x1328像素
-           size: 1328x1328
-           # 图像生成的提示词：生成一张小狗图片
-           prompt: 生成一张小狗图片
-           # 负面提示词，避免生成包含天空的图像内容
-           negative-prompt: 天空
-           # 响应格式设置为URL，返回图像的访问链接
-           response-format: url
-           # 推理步数设置为20步，控制生成图像的质量和细节
-           inference-steps: 20
-   ```
-7. 单元测试前置准备
-   - 在进行单元测试之前，需要进行一些配置，以提供携带defaultOptions的ImageModel类
-   - 创建EnhancedImageModelConfig类，用于加载配置默认的ImageModel类
+
+1. 本次单元测试延续上一章节的测试流程，继续验证文生图和图生图功能。
+2. 不同的是，我们通过设计不同的 `ImagePrompt` 来验证 Prompt 参数的优先级是否最高。
+3. 对于运行时参数与默认参数的优先级关系，我们通过手动构造并注入 Bean 实例来进行验证。
+4. 我们创建 `ImageOptionsProperties` 类来构造并注入 Bean 实例，从而测试参数优先级顺序是否正确。
+
+##### 参数示例
+
 ```java
+/**
+ * @author 王玉涛
+ * @version 1.0
+ * @since 2025/10/1
+ */
+@Data
+@Configuration
+@ConfigurationProperties("ai.enhanced.image.options")
+public class ImageOptionsProperties {
+   /**
+    * 生成图像的数量
+    * 对应 OpenAI API 的 'n' 参数
+    */
+   private Integer n;
+
+   /**
+    * 使用的模型名称
+    */
+   private String model;
+
+   /**
+    * 图像宽度（像素）
+    * 对应 OpenAI API 的 'size_width' 参数
+    */
+   private Integer width;
+
+   /**
+    * 图像高度（像素）
+    * 对应 OpenAI API 的 'size_height' 参数
+    */
+   private Integer height;
+
+   /**
+    * 图像质量设置
+    * 可选值：standard、hd
+    */
+   private String quality;
+
+   /**
+    * 响应格式
+    * 可选值：url、b64_json
+    * 对应 OpenAI API 的 'response_format' 参数
+    */
+   private String responseFormat;
+
+   /**
+    * 图像尺寸规格
+    * 格式："{width}x{height}"，例如 "1024x1024"
+    * 对应 OpenAI API 的 'size' 参数
+    */
+   private String size;
+
+   /**
+    * 图像风格
+    * 可选值：vivid、natural
+    * 对应 OpenAI API 的 'style' 参数
+    */
+   private String style;
+
+   /**
+    * 用户标识符
+    * 用于违规监控和滥用检测
+    * 对应 OpenAI API 的 'user' 参数
+    */
+   private String user;
+
+   /**
+    * 自定义字段，注意：该字段需要与厂商的需求对齐
+    * 通常用于指定参考图像或蒙版图像
+    */
+   private String image;
+
+   /**
+    * 自定义字段，用于文本提示词发送
+    * 图像生成的主要描述文本
+    */
+   private String prompt;
+
+
+   /**
+    * 反向提示词，表示不希望出现的元素
+    */
+   private String negativePrompt;
+
+   /**
+    * 自定义字段，用于指定种子值，用于结果复现，相同的seed会有相似的输出
+    */
+   private Long seed;
+
+   /**
+    * 自定义字段，用于指定 guidance scale，用于控制生成图像的随机性，值越高则生成图像越严格
+    */
+   private Integer guidanceScale;
+
+   /**
+    * 自定义字段，用于指定 cfg，影响图文一致性，值越高则生成图像越有个性化，建议≥4.0
+    */
+   private String cfg;
+
+   /**
+    * 自定义字段，用于指定推理步骤数，用于控制生成图像的随机性，值越高则生成图像越随机
+    */
+   private Integer inferenceSteps;
+}
 
 ```
+
+##### YAML 配置文件示例
+```yaml
+ai:
+  enhanced:
+    image:
+      options:
+        # 指定用于增强图像生成的模型为Qwen/Qwen-Image
+        model: Qwen/Qwen-Image
+        # 设置生成图像的尺寸为1328x1328像素
+        size: 1328x1328
+        # 图像生成的提示词：生成一张小狗图片
+        prompt: 生成一张小狗图片
+        # 负面提示词，避免生成包含天空的图像内容
+        negative-prompt: 天空
+        # 响应格式设置为URL，返回图像的访问链接
+        response-format: url
+        # 推理步数设置为20步，控制生成图像的质量和细节
+        inference-steps: 20
+```
+
+##### 单元测试前置准备
+
+- 在进行单元测试之前，需要进行一些配置，以便提供携带 defaultOptions 的 ImageModel 类。
+- 创建 `EnhancedImageModelConfig` 类，用于加载配置默认的 ImageModel 类。
+```java
+
+/**
+ * @author 王玉涛
+ * @version 1.0
+ * @since 2025/10/1
+ */
+@Slf4j
+@Configuration
+@RequiredArgsConstructor
+public class EnhancedImageModelConfig {
+
+    /**
+     * 从配置文件中读取OpenAI API密钥
+     */
+    @Value("${spring.ai.openai.api-key}")
+    private String apiKey;
+
+    /**
+     * 从配置文件中读取OpenAI API基础URL
+     */
+    @Value("${spring.ai.openai.base-url}")
+    private String baseUrl; 
+    
+    /**
+     * 配置文生图选项：指定模型、推理步数和提示词
+     */
+    private final ImageOptionsProperties properties;
+    
+    /**
+     * 创建EnhancedImageApi实例
+     * 用于与图像生成API进行通信
+     * 
+     * @return EnhancedImageApi 实例
+     */
+    @Bean
+    public EnhancedImageApi enhancedImageApi() {
+        log.info("Initializing EnhancedImageApi with baseUrl: {}", baseUrl);
+        return EnhancedImageApi.builder()
+                .apiKey(apiKey)
+                .baseUrl(baseUrl)
+                .build();
+    }
+    
+    /**
+     * 创建EnhancedImageOptions实例
+     * 包含图像生成的各种配置参数
+     * 
+     * @return EnhancedImageOptions 实例
+     */
+    @Bean
+    public EnhancedImageOptions enhancedImageOptions() {
+        log.info("Building EnhancedImageOptions with model: {} and prompt: {}", 
+                properties.getModel(), properties.getPrompt());
+        
+        return EnhancedImageOptions.builder()
+                .seed(properties.getSeed())
+                .model(properties.getModel())
+                .inferenceSteps(properties.getInferenceSteps())
+                .prompt(properties.getPrompt())
+                .negativePrompt(properties.getNegativePrompt())
+                .guidanceScale(properties.getGuidanceScale())
+                .cfg(properties.getCfg())
+                .width(properties.getWidth())
+                .height(properties.getHeight())
+                .style(properties.getStyle())
+                .size(properties.getSize())
+                .quality(properties.getQuality())
+                .responseFormat(properties.getResponseFormat())
+                .user(properties.getUser())
+                .image(properties.getImage())
+                .n(properties.getN())
+                .build();
+    }
+    
+    /**
+     * 创建EnhancedImageModel实例
+     * 整合API客户端和配置选项，提供完整的图像生成能力
+     * 
+     * @return EnhancedImageModel 实例
+     */
+    @Bean
+    public EnhancedImageModel enhancedImageModel() {
+        log.info("Creating EnhancedImageModel with configured API and options");
+        return new EnhancedImageModel(enhancedImageApi(), enhancedImageOptions(), RetryUtils.DEFAULT_RETRY_TEMPLATE);
+    }
+}
+```
+
+##### 单元测试方法
+
+```java
+
+/**
+  * 测试EnhancedImageModel功能
+  * 包括文生图和图生图两种模式的测试
+  */
+@Test
+void testModel() throws IOException {
+    // 加载测试用的原始图片资源
+    ClassLoader classLoader = getClass().getClassLoader();
+    URL resource = classLoader.getResource("static/风景图片01.png");
+    Assert.notNull(resource, "没有找到图片");
+    String filePath = java.net.URLDecoder.decode(resource.getFile(), StandardCharsets.UTF_8);
+    File file = new File(filePath);
+
+    // 配置图生图选项：指定模型、输入图片、提示词和推理步数
+    EnhancedImageOptions imageOptionsEdit = EnhancedImageOptions.builder()
+            .model("Qwen/Qwen-Image-Edit")
+            .prompt("请你将天空改为黑色")
+            .image(ImageUtils.convert(file))
+            .inferenceSteps(20)
+            .build();
+
+    // 配置文生图选项：指定模型和提示词
+    EnhancedImageOptions imageOptions = EnhancedImageOptions.builder()
+            .model("Qwen/Qwen-Image")
+            .prompt("生成一张小猫图片")
+            .build();
+
+    // 调用模型生成图片，分别获取文生图和图生图的结果
+    ImageResponse imageResponseEdit = enhancedImageModel.call(new ImagePrompt("将图片的水变为岩浆", imageOptionsEdit));
+    ImageResponse imageResponse = enhancedImageModel.call(new ImagePrompt("生成小狗图片", imageOptions));
+    
+    // 验证生成的图片不为空
+    Assert.notNull(imageResponseEdit, "编辑图片响应为空");
+    Assert.notNull(imageResponse, "生成图片响应为空");
+    
+    // 获取生成的图片结果
+    Image editImage = imageResponseEdit.getResult().getOutput();
+    Image generatedImage = imageResponse.getResult().getOutput();
+    
+    // 验证图片结果不为空
+    Assert.notNull(editImage, "编辑图片结果为空");
+    Assert.notNull(generatedImage, "生成图片结果为空");
+    
+    // 验证图片URL不为空
+    Assert.hasText(editImage.getUrl(), "编辑图片URL为空");
+    Assert.hasText(generatedImage.getUrl(), "生成图片URL为空");
+
+    // 输出生成的图片信息
+    System.out.println("编辑图片: " + editImage.getUrl());
+    System.out.println("生成图片: " + generatedImage.getUrl());
+}
+```
+
+**经过测试验证，ImagePrompt 可以正确覆盖默认提示词，并生成不同的图片结果。**
+
+**至此，Spring AI Image API 集成和文生图功能已初步完成！**
+   
