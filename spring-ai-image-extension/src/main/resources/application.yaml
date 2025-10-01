@@ -16,3 +16,19 @@ spring:
           model: Qwen/Qwen-Image
           # 设置生成图像的尺寸为1328x1328像素，注意，具体参数根据自身选择厂商提供的API文档为准
           size: 1328x1328
+ai:
+  enhanced:
+    image:
+      options:
+        # 指定用于增强图像生成的模型为Qwen/Qwen-Image
+        model: Qwen/Qwen-Image
+        # 设置生成图像的尺寸为1328x1328像素
+        size: 1328x1328
+        # 图像生成的提示词：生成一张小狗图片
+        prompt: 生成一张小狗图片
+        # 负面提示词，避免生成包含天空的图像内容
+        negative-prompt: 天空
+        # 响应格式设置为URL，返回图像的访问链接
+        response-format: url
+        # 推理步数设置为20步，控制生成图像的质量和细节
+        inference-steps: 20
