@@ -139,7 +139,7 @@ public class EnhancedImageOptions implements ImageOptions {
 	 * 自定义字段，用于指定推理步骤数，用于控制生成图像的随机性，值越高则生成图像越随机
 	 */
 	@JsonProperty("num_inference_steps")
-	private String inferenceSteps;
+	private Integer inferenceSteps;
 
 	/**
 	 * 根据现有的选项创建一个新的 OpenAiImageOptions 实例。
