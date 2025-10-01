@@ -577,13 +577,16 @@ void testModel() throws IOException {
 **至此，Spring AI Image API 集成和文生图、图生图功能已初步完成！**
 
 ## 3. EnhancedImageClient 图片模型客户端封装
+
 ### 3.1 前言
-1. 在之前我们已经进行从底层Api到顶层ImageModel的链路改造，后续我们将抽象层级再次提高，创建一个EnhancedImageClient，将ImageModel封装成Client
-2. EnhancedImageClient将会参考ChatClient的封装构造逻辑，其中包括但不仅限于链式调用封装、提示词优化等功能
+
+1. 在前面的章节中，我们已经完成了从底层 API 到顶层 ImageModel 的链路改造。接下来，我们将进一步提升抽象层级，创建一个 EnhancedImageClient，将 ImageModel 封装成更易用的客户端形式。
+2. EnhancedImageClient 的设计将参考 ChatClient 的封装逻辑，包括但不限于链式调用封装、提示词优化等特性，以提供更加流畅和直观的开发体验。
 
 ### 3.2 初步构建
-1. 初步构建EnhancedImageClient，我们先从最基础的链式调用开始
-2. 首先在core包下创建client包，该包作为客户端统一的入口
-3. 创建EnhancedImageClient类
-4. 创建链式调用方法形式
-   - 在该类中，可以通过以下形式进行使用：enhancedImageClient.param().prompt("生成一张小猫图片").output();
+
+1. EnhancedImageClient 的初步构建将从基础的链式调用功能开始实现
+2. 首先在 core 包下创建 client 子包，作为客户端功能的统一入口点
+3. 创建 EnhancedImageClient 类，作为图像生成功能的主要交互接口
+4. 设计链式调用方法结构，使开发者能够通过简洁的方式调用图像生成服务：
+   - 使用示例：`enhancedImageClient.param().prompt("生成一张小猫图片").output();`
