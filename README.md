@@ -167,7 +167,7 @@ curl -X POST "http://localhost:8080/api/core/images/solitaire" \
 ## 🚀 快速开始指南
 
 ### 1. 配置API密钥和基础URL
-在 [application.yaml](src/main/resources/application.yaml) 中配置以下参数：
+在 [application.yaml](spring-ai-image-extension/src/main/resources/application.yaml) 中配置以下参数：
 ```yaml
 spring:
   ai:
@@ -184,7 +184,7 @@ spring:
 3. 访问 `http://localhost:8080/api/quick-start/images?prompt=图片生成提示词` 即可快速开始
 
 ### 3. 高级配置
-在 [application.yaml](src/main/resources/application.yaml) 中可以配置默认参数：
+在 [application.yaml](spring-ai-image-extension/src/main/resources/application.yaml) 中可以配置默认参数：
 ```yaml
 ai:
   enhanced:
@@ -207,8 +207,8 @@ ai:
 ## 📚 项目文档
 
 1. 在项目的每个包下都附带readme.md
-2. [core模块下的readme.md](src/main/java/com/springai/springaiimageextision/core/readme.md)提供完整的教程和深入的技术细节
-3. [quickstart模块下的readme.md](src/main/java/com/springai/springaiimageextision/quickstart/readme.md)提供快速开始指南
+2. [core模块下的readme.md](spring-ai-image-extension/src/main/java/com/springai/springaiimageextision/core/readme.md)提供完整的教程和深入的技术细节
+3. [quickstart模块下的readme.md](spring-ai-image-extension/src/main/java/com/springai/springaiimageextision/quickstart/readme.md)提供快速开始指南
 
 ## 📖 参考资料
 
