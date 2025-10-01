@@ -28,76 +28,118 @@ import org.springframework.ai.image.ImageOptions;
 public class EnhancedImageOptions implements ImageOptions {
 
 	/**
-	 * 要生成的图像数量。必须介于1到10之间。对于dall-e-3，仅支持n=1。
+	 * 生成图像的数量
+	 * 对应 OpenAI API 的 'n' 参数
+	 * 因为这里对接了硅基流动的厂商，因此这里使用 'batch_size' 代替 'n'
 	 */
-	@JsonProperty("n")
+	@JsonProperty("batch_size")
 	private Integer n;
 
 	/**
-	 * 用于图像生成的模型。
+	 * 使用的模型名称
+	 * 对应 OpenAI API 的 'model' 参数
 	 */
 	@JsonProperty("model")
 	private String model;
 
 	/**
-	 * 生成图像的宽度。对于dall-e-2，必须是256、512或1024之一。
-	 * 此属性与'size'属性相互关联 - 设置宽度和高度将自动计算并设置"widthxheight"格式的大小。
-	 * 相反，设置有效的尺寸字符串将解析并设置单独的宽度和高度值。
+	 * 图像宽度（像素）
+	 * 对应 OpenAI API 的 'size_width' 参数
 	 */
 	@JsonProperty("size_width")
 	private Integer width;
 
 	/**
-	 * 生成图像的高度。对于dall-e-2，必须是256、512或1024之一。
-	 * 此属性与'size'属性相互关联 - 设置宽度和高度将自动计算并设置"widthxheight"格式的大小。
-	 * 相反，设置有效的尺寸字符串将解析并设置单独的宽度和高度值。
+	 * 图像高度（像素）
+	 * 对应 OpenAI API 的 'size_height' 参数
 	 */
 	@JsonProperty("size_height")
 	private Integer height;
 
 	/**
-	 * 将生成的图像质量。hd 创建具有更精细细节和跨图像更大一致性的图像。
-	 * 此参数仅支持 dall-e-3。
+	 * 图像质量设置
+	 * 可选值：standard、hd
+	 * 对应 OpenAI API 的 'quality' 参数
 	 */
 	@JsonProperty("quality")
 	private String quality;
 
 	/**
-	 * 生成图像的返回格式。必须是 url 或 b64_json 之一。
+	 * 响应格式
+	 * 可选值：url、b64_json
+	 * 对应 OpenAI API 的 'response_format' 参数
 	 */
 	@JsonProperty("response_format")
 	private String responseFormat;
 
 	/**
-	 * 生成图像的尺寸。对于 dall-e-2，必须是 256x256、512x512 或 1024x1024 之一。
-	 * 对于 dall-e-3 模型，必须是 1024x1024、1792x1024 或 1024x1792 之一。
-	 * 当同时设置宽度和高度时，此属性会自动计算，格式为"widthxheight"。
-	 * 当直接设置此属性时，它必须遵循"WxH"格式，其中W和H是有效整数。
-	 * 无效格式将导致宽度和高度值为空。
+	 * 图像尺寸规格
+	 * 格式："{width}x{height}"，例如 "1024x1024"
+	 * 对应 OpenAI API 的 'size' 参数
 	 */
 	@JsonProperty("size")
 	private String size;
 
 	/**
-	 * 生成图像的样式。必须是 vivid 或 natural 之一。
-	 * Vivid 使模型倾向于生成超现实和戏剧性图像。
-	 * Natural 使模型产生更自然、不那么超现实的图像。
-	 * 此参数仅支持 dall-e-3。
+	 * 图像风格
+	 * 可选值：vivid、natural
+	 * 对应 OpenAI API 的 'style' 参数
 	 */
 	@JsonProperty("style")
 	private String style;
 
 	/**
-	 * 代表最终用户的唯一标识符，可以帮助 OpenAI 监控和检测滥用行为。
+	 * 用户标识符
+	 * 用于违规监控和滥用检测
+	 * 对应 OpenAI API 的 'user' 参数
 	 */
 	@JsonProperty("user")
 	private String user;
 
 	/**
-	 * 描述要生成的图像的提示。
+	 * 自定义字段，注意：该字段需要与厂商的需求对齐
+	 * 通常用于指定参考图像或蒙版图像
+	 */
+	@JsonProperty("image")
+	private String image;
+
+	/**
+	 * 自定义字段，用于文本提示词发送
+	 * 图像生成的主要描述文本
 	 */
 	@JsonProperty("prompt")
 	private String prompt;
+
+
+	/**
+	 * 反向提示词，表示不希望出现的元素
+	 */
+	@JsonProperty("negative_prompt")
+	private String negativePrompt;
+
+	/**
+	 * 自定义字段，用于指定种子值，用于结果复现，相同的seed会有相似的输出
+	 */
+	@JsonProperty("seed")
+	private Long seed;
+
+	/**
+	 * 自定义字段，用于指定 guidance scale，用于控制生成图像的随机性，值越高则生成图像越严格
+	 */
+	@JsonProperty("guidance_scale")
+	private Integer guidanceScale;
+
+	/**
+	 * 自定义字段，用于指定 cfg，影响图文一致性，值越高则生成图像越有个性化，建议≥4.0
+	 */
+	@JsonProperty("cfg")
+	private String cfg;
+
+	/**
+	 * 自定义字段，用于指定推理步骤数，用于控制生成图像的随机性，值越高则生成图像越随机
+	 */
+	@JsonProperty("num_inference_steps")
+	private String inferenceSteps;
 
 	/**
 	 * 根据现有的选项创建一个新的 OpenAiImageOptions 实例。
