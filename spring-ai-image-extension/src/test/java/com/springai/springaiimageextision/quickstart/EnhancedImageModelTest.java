@@ -15,7 +15,7 @@ import org.springframework.util.Assert;
  * @since 2025/10/1
  */
 @SpringBootTest
-class OpenAiImageModelTest {
+class EnhancedImageModelTest {
 
     @Resource
     private OpenAiImageModel openAiImageModel;

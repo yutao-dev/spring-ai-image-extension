@@ -116,5 +116,6 @@ SpringAI 项目原生功能并未包含图像生成功能，如需扩展其他�
 
 #### 2.3.2 源码复制
 1. 我们从[github仓库的源码地址](https://github.com/spring-projects/spring-ai/blob/1.0.0/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiImageModel.java)中，将源代码复制到本项目中
-2. 
+2. 翻译注释
+3. 修改类名为`EnhancedImageModel`
    

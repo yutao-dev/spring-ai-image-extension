@@ -34,9 +34,9 @@ import org.springframework.util.Assert;
  * @author 王玉涛
  * @since 0.8.0
  */
-public class OpenAiImageModel implements ImageModel {
+public class EnhancedImageModel implements ImageModel {
 
-	private static final Logger logger = LoggerFactory.getLogger(OpenAiImageModel.class);
+	private static final Logger logger = LoggerFactory.getLogger(EnhancedImageModel.class);
 
 	private static final ImageModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultImageModelObservationConvention();
 
@@ -70,7 +70,7 @@ public class OpenAiImageModel implements ImageModel {
 	 * @param openAiImageApi 用于与 OpenAI 图像 API 交互的 OpenAiImageApi 实例。
 	 * @throws IllegalArgumentException 如果 openAiImageApi 为 null
 	 */
-	public OpenAiImageModel(OpenAiImageApi openAiImageApi) {
+	public EnhancedImageModel(OpenAiImageApi openAiImageApi) {
 		this(openAiImageApi, OpenAiImageOptions.builder().build(), RetryUtils.DEFAULT_RETRY_TEMPLATE);
 	}
 
@@ -80,7 +80,7 @@ public class OpenAiImageModel implements ImageModel {
 	 * @param options 用于配置图像模型的 OpenAiImageOptions。
 	 * @param retryTemplate 重试模板。
 	 */
-	public OpenAiImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate) {
+	public EnhancedImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate) {
 		this(openAiImageApi, options, retryTemplate, ObservationRegistry.NOOP);
 	}
 
@@ -91,8 +91,8 @@ public class OpenAiImageModel implements ImageModel {
 	 * @param retryTemplate 重试模板。
 	 * @param observationRegistry 用于仪器仪表的 ObservationRegistry。
 	 */
-	public OpenAiImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate,
-			ObservationRegistry observationRegistry) {
+	public EnhancedImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate,
+							  ObservationRegistry observationRegistry) {
 		Assert.notNull(openAiImageApi, "OpenAiImageApi 不能为空");
 		Assert.notNull(options, "options 不能为空");
 		Assert.notNull(retryTemplate, "retryTemplate 不能为空");
