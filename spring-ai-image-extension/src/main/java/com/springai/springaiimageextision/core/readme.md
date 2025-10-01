@@ -114,4 +114,7 @@ SpringAI 项目原生功能并未包含图像生成功能，如需扩展其他�
 2. 有关这一部分的源码阅读以及改造流程的思路梳理，可以移步并参考[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)的6.4章节
 3. 源文档给出了详细的源码阅读方法论梳理，并给出详细的改造步骤以及踩坑记录，我们将根据源文档，将流程梳理成一步到位的方法，并给出相应的代码实现
 
+#### 2.3.2 源码复制
+1. 我们从[github仓库的源码地址](https://github.com/spring-projects/spring-ai/blob/1.0.0/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiImageModel.java)中，将源代码复制到本项目中
+2. 
    
