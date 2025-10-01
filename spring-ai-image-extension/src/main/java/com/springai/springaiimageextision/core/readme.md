@@ -126,4 +126,11 @@ SpringAI 项目原生功能并未包含图像生成功能，如需扩展其他�
 4. 将上述的两处代码进行合并，即ImagePrompt优先与自定义参数合并，自定义参数再与默认参数合并，创建请求的逻辑也只需要ImageOptions作为参数即可
 5. 我们将这里的参数合并，封装为工具类方法，即`BeanUtils.nullChooseOther(Object defaultValue, Object value, Class<?> clazz)`
 6. 其他的地方也需要进行修改，例如修改OpenAiImageApi、OpenAiImageOptions类，修改成自定义的类，并修改相应的构造函数，只需要根据检查报错修改即可
+
+至此，我们成功改造了ImageModel层
+
+#### 2.3.4 单元测试
+1. 我们此次的单元测试，沿用上一章节的测试流程，依旧是测试文生图+图生图
+2. 但是这一次我们通过设计不同的ImagePrompt，来测试其Prompt的优先级顺序是否是最高的
+3. 而对于运行时参数与默认参数的优先级顺序，我们通过手动构造并注入Bean实例，来测试是优先级是否正确
    
