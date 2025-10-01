@@ -1,9 +1,14 @@
 package com.springai.springaiimageextision.core;
 
 import com.springai.springaiimageextision.core.custom.api.EnhancedImageApi;
+import com.springai.springaiimageextision.core.custom.model.EnhancedImageModel;
 import com.springai.springaiimageextision.core.custom.option.EnhancedImageOptions;
 import com.springai.springaiimageextision.core.util.ImageUtils;
+import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.image.Image;
+import org.springframework.ai.image.ImagePrompt;
+import org.springframework.ai.image.ImageResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.Assert;
@@ -34,6 +39,9 @@ class EnhancedTest {
     @Value("${spring.ai.openai.base-url}")
     private String baseUrl;
 
+    @Resource
+    private EnhancedImageModel enhancedImageModel;
+
     /**
      * 测试EnhancedImageApi和EnhancedImageOptions功能
      * 包括文生图和图生图两种模式的测试
@@ -57,7 +65,6 @@ class EnhancedTest {
                 .build();
 
         // 加载测试用的原始图片资源
-
         ClassLoader classLoader = getClass().getClassLoader();
         URL resource = classLoader.getResource("static/风景图片01.png");
         Assert.notNull(resource, "没有找到图片");
@@ -100,5 +107,59 @@ class EnhancedTest {
         // 输出生成的图片URL
         System.out.println("文生图地址: " + url);
         System.out.println("图生图地址: " + urlEdit);
+    }
+
+    /**
+     * 测试EnhancedImageModel功能
+     * 包括文生图和图生图两种模式的测试
+     *
+     * @throws IOException 当读取资源文件失败时抛出
+     */
+    @Test
+    void testModel() throws IOException {
+        // 加载测试用的原始图片资源
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL resource = classLoader.getResource("static/风景图片01.png");
+        Assert.notNull(resource, "没有找到图片");
+        String filePath = java.net.URLDecoder.decode(resource.getFile(), StandardCharsets.UTF_8);
+        File file = new File(filePath);
+
+        // 配置图生图选项：指定模型、输入图片、提示词和推理步数
+        EnhancedImageOptions imageOptionsEdit = EnhancedImageOptions.builder()
+                .model("Qwen/Qwen-Image-Edit")
+                .prompt("请你将天空改为黑色")
+                .image(ImageUtils.convert(file))
+                .inferenceSteps(20)
+                .build();
+
+        // 配置文生图选项：指定模型和提示词
+        EnhancedImageOptions imageOptions = EnhancedImageOptions.builder()
+                .model("Qwen/Qwen-Image")
+                .prompt("生成一张小猫图片")
+                .build();
+
+        // 调用模型生成图片，分别获取文生图和图生图的结果
+        ImageResponse imageResponseEdit = enhancedImageModel.call(new ImagePrompt("将图片的水变为岩浆", imageOptionsEdit));
+        ImageResponse imageResponse = enhancedImageModel.call(new ImagePrompt("生成小狗图片", imageOptions));
+        
+        // 验证生成的图片不为空
+        Assert.notNull(imageResponseEdit, "编辑图片响应为空");
+        Assert.notNull(imageResponse, "生成图片响应为空");
+        
+        // 获取生成的图片结果
+        Image editImage = imageResponseEdit.getResult().getOutput();
+        Image generatedImage = imageResponse.getResult().getOutput();
+        
+        // 验证图片结果不为空
+        Assert.notNull(editImage, "编辑图片结果为空");
+        Assert.notNull(generatedImage, "生成图片结果为空");
+        
+        // 验证图片URL不为空
+        Assert.hasText(editImage.getUrl(), "编辑图片URL为空");
+        Assert.hasText(generatedImage.getUrl(), "生成图片URL为空");
+
+        // 输出生成的图片信息
+        System.out.println("编辑图片: " + editImage.getUrl());
+        System.out.println("生成图片: " + generatedImage.getUrl());
     }
 }
