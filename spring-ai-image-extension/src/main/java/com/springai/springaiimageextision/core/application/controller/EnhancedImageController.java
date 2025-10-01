@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,4 +37,23 @@ public class EnhancedImageController {
                                 @RequestParam("prompt") String prompt) {
         return Objects.isNull(file) ? enhancedImageService.textToImage(prompt) : enhancedImageService.imageToImage(file, prompt);
     }
+
+    /**
+     * 基于上传的图像和文本提示生成图像接龙
+     *
+     * @param file   上传的图像文件
+     * @param prompt 初始文本提示，用于生成第一张图像
+     * @param prompts 图像编辑提示列表，用于连续生成图像
+     * @param step   接龙步数，控制生成图像的数量
+     * @return 生成的图像列表
+     */
+    @PostMapping("/solitaire")
+    public List<String> generateImageSolitaire(@RequestParam(name = "file", required = false) MultipartFile file,
+                                               @RequestParam("prompt") String prompt,
+                                               @RequestParam(name = "prompts", required = false) List<String> prompts,
+                                               @RequestParam("step") int step) {
+        return Objects.isNull(file) ? enhancedImageService.textStartSolitaire(prompt, prompts, step) :
+                enhancedImageService.imageStartSolitaire(file, prompt, prompts, step);
+    }
+
 }

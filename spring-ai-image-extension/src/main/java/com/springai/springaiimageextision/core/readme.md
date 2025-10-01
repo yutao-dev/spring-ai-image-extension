@@ -931,3 +931,42 @@ void testClient() throws IOException {
         log.info("solitaire: {}", solitaire);
     }
     ```
+   
+### 5.5 Web服务提供
+#### 5.5.1 前言
+1. 在前面章节中，我们已经进行了图片接龙功能封装，随后我们将图片接龙功能封装成web服务，方便后续调用。
+
+#### 5.5.2 接口提供
+1. 请求地址：/api/core/images/solitaire
+2. 请求方式：POST
+3. 请求参数：
+   - prompt: 图片提示词
+   - file: 图片（如果不传入，则开启先文生图再图生图接龙）
+   - prompts: 图片提示词列表, 如果传入，则开启自定义提示词接龙，如果不传，则默认使用prompt
+   - step: 接龙步数
+4. 响应参数：
+   - List<String> 包含每步生成的图像URL
+
+#### 5.5.3 测试
+1. 测试地址：http://localhost:8080/api/core/images/solitaire
+2. 测试参数：
+   - prompt: 请你生成小猫图片
+   - prompts: 请你美化图片的细节, 请你修改小猫的发色
+   - step: 3
+3. 测试结果: [
+
+   "https://bizyair-prod.oss-cn-shanghai.aliyuncs.com/outputs%2Fa72938e2-bafb-474c-8563-52df740ff5d3_2379d287fa80064e087c83d42b3ac818_ComfyUI_8d915433_00001_.png?OSSAccessKeyId=LTAI5tPza7RAEKed35dCML5U&Expires=1759332731&Signature=rSUrOj6v1rB5uCplj4F4tUK%2B%2F3M%3D",
+   "https://bizyair-dev.oss-cn-shanghai.aliyuncs.com/outputs%2F264cbb50-01bd-4dcc-8812-638fd3ef2dc7_ddc7268dfba450af188914a42aa834c5_ComfyUI_fd12fb2c_00001_.png?OSSAccessKeyId=LTAI5tPza7RAEKed35dCML5U&Expires=1759332752&Signature=Z9CT1cqcRFmIV7nEFW6yrDoiEts%3D",
+   "https://bizyair-dev.oss-cn-shanghai.aliyuncs.com/outputs%2F0790feca-a531-456c-af33-9a6fd876b26f_ba3e933891a35787e60bc0e5216d3b5d_ComfyUI_1ad94541_00001_.png?OSSAccessKeyId=LTAI5tPza7RAEKed35dCML5U&Expires=1759332773&Signature=YPYkDUdi4GHPEODmQo%2BcQBmyASA%3D",
+   "https://bizyair-dev.oss-cn-shanghai.aliyuncs.com/outputs%2F4a715c89-87eb-4e60-ba09-456057e6aa32_b382ddc81a6864ca65d0a9a8c1254dc3_ComfyUI_7004ce01_00001_.png?OSSAccessKeyId=LTAI5tPza7RAEKed35dCML5U&Expires=1759332794&Signature=s09n2blFnYmc3bifuiI4pw00nMU%3D"
+   ]
+4. 测试参数2
+   - file: 随机图片
+   - prompt: 请你美化图片的细节
+   - prompts: 请你美化图片的细节, 请你更换人物的衣着
+   - step: 3
+5. 测试结果: 成功（注意，如果图片名过于复杂，比如内嵌多个Image类型，则可能会导致类型识别错误）
+
+**至此，EnhancedImageClient章节完毕，接龙功能正常运行，正式版本1.0.0完毕!**
+
+**后续的版本更新会倾向于丰富玩法，或者优化当前的性能为主，敬请期待**
