@@ -3,16 +3,26 @@ package com.springai.springaiimageextision.core.client;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.springai.springaiimageextision.core.custom.model.EnhancedImageModel;
 import com.springai.springaiimageextision.core.custom.option.EnhancedImageOptions;
+import com.springai.springaiimageextision.core.util.ImageUtils;
+import com.springai.springaiimageextision.core.util.LoggerUtils;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
+import org.springframework.util.Assert;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author 王玉涛
  * @version 1.0
  * @since 2025/10/1
  */
+@Slf4j
 @Builder
 @RequiredArgsConstructor
 public class EnhancedImageClient {
@@ -259,6 +269,52 @@ public class EnhancedImageClient {
         public String output() {
             EnhancedImageOptions imageOptions = buildOptions();
             return this.call(imageOptions).getResult().getOutput().getUrl();
+        }
+
+
+
+        /**
+         * 执行连续图像生成操作（接龙模式）
+         * 
+         * 该方法会根据设置的参数连续生成指定步数的图像，每一步都会基于前一步的结果进行生成，
+         * 形成图像接龙的效果。每一步生成的图像URL会被记录并返回。
+         * 
+         * 实现逻辑：
+         * 1. 验证输入参数step的有效性（非空且在1-7之间）
+         * 2. 当step超过3时给出性能警告
+         * 3. 循环执行step次图像生成：
+         *    - 第一次直接使用当前设置的提示词生成图像
+         *    - 后续每次将上一次生成的图像作为输入图像（image参数）
+         * 4. 记录并返回每一步生成的图像URL
+         * 
+         * @param step 连续生成的步数，必须大于0且小于等于7，建议不超过3步以保证性能
+         * @return 包含每步生成图像URL的列表，列表顺序即为生成顺序
+         * @throws IllegalArgumentException 当step为null或不在有效范围内时抛出
+         * @throws RuntimeException 当图像处理或网络请求出现异常时抛出
+         */
+        public List<String> solitaire(Integer step) throws IOException {
+            Assert.notNull(this.model, "model 不得为 null");
+            Assert.notNull(this.image, "image 不得为 null");
+            Assert.notNull(step, "step 不得为 null");
+            Assert.isTrue(step > 0 && step <= 7, "step 必须大于 0 且小于等于 7");
+            LoggerUtils.logWarnIfTrue(step > 3, "step 大于 3 时可能会导致生成图像时间大幅增加");
+
+            List<String> solitaire = new ArrayList<>();
+            for (int i = 0; i < step; i++) {
+                
+                // 从第二步开始，将上一步生成的图像作为输入图像
+                if (i != 0) {
+                    String url = solitaire.get(i - 1);
+                    File file = ImageUtils.createImageAsUrl(url);
+                    this.image = ImageUtils.convert(file);
+                }
+                
+                String output = this.output();
+                log.info("step: {}, output: {}", i + 1, output);
+                solitaire.add(output);
+            }
+            log.info("solitaire: {}", solitaire);
+            return solitaire;
         }
 
         /**

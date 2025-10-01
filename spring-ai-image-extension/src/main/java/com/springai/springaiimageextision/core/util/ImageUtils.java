@@ -98,15 +98,50 @@ public class ImageUtils {
     }
 
     /**
-     * 获取文件类型
+     * 从文件名中提取文件扩展名并标准化图片类型
      *
-     * @param originalFilename 文件名
-     * @return 文件类型
+     * @param originalFilename 原始文件名（包含扩展名）
+     * @return 标准化的文件类型字符串，如 "png"、"jpg"、"webp" 等
      */
     public static String getFileType(String originalFilename) {
         Assert.notNull(originalFilename, "文件名不能为空");
         Assert.hasText(originalFilename, "文件名不能为空");
-        return originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+        originalFilename = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+
+        originalFilename = findStartImageType(originalFilename);
+
+        return originalFilename;
+    }
+
+    /**
+     * 尝试从文件名中获取图片类型
+     *
+     * @param originalFilename 文件名
+     * @return 图片类型，如"png"、"jpg"、"jpeg"、"webp"等
+     */
+    private static String findStartImageType(String originalFilename) {
+        Assert.notNull(originalFilename, "文件名不能为空");
+        Assert.hasText(originalFilename, "文件名不能为空");
+        if (originalFilename.startsWith("png")) {
+            return "png";
+        } else if (originalFilename.startsWith("jpg") || originalFilename.startsWith("jpeg")) {
+            return "jpg";
+        } else if (originalFilename.startsWith("webp")) {
+            return "webp";
+        } else {
+            return "jpg";
+        }
+    }
+
+
+    /**
+     * 判断文件类型是否为图片
+     *
+     * @param type 文件名
+     * @return true表示为图片，false表示非图片
+     */
+    private static boolean isImageType(String type) {
+        return "png".equals(type) || "jpg".equals(type) || "jpeg".equals(type) || "webp".equals(type);
     }
 
     /**
@@ -115,7 +150,7 @@ public class ImageUtils {
      * @param type 文件类型
      */
     public static void isImage(String type) {
-        Assert.isTrue("png".equals(type) || "jpg".equals(type) || "jpeg".equals(type) || "webp".equals(type), "类型错误");
+        Assert.isTrue(isImageType(type), "类型错误");
     }
 
     /**
@@ -149,6 +184,41 @@ public static File convertToFile(MultipartFile file) throws IOException {
         } catch (IOException e) {
             log.error("将MultipartFile转换为File时发生错误", e);
             throw new IOException("文件转换失败", e);
+        }
+    }
+
+    /**
+     * 从URL创建图片文件
+     *
+     * @param url 图片URL
+     * @return 图片文件对象
+     */
+    public static File createImageAsUrl(String url) throws IOException {
+        try {
+            URL imageUrl = new URL(url);
+            
+            // 创建临时文件
+            String fileName = url.substring(url.lastIndexOf("/") + 1);
+            // 清理文件名，只保留字母、数字、点号和下划线，去除非法字符
+            fileName = fileName.replaceAll("[^a-zA-Z0-9._-]", "_");
+            String fileType = getFileType(fileName);
+            File tempFile = File.createTempFile("image_", "." + fileType);
+            
+            // 从URL下载图片内容并写入临时文件
+            try (InputStream inputStream = imageUrl.openStream();
+                 FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+                
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            }
+            
+            return tempFile;
+        } catch (IOException e) {
+            log.error("从URL创建图片文件时发生错误: {}", url, e);
+            throw e;
         }
     }
 }

@@ -729,6 +729,112 @@ void testClient() throws IOException {
 1. 在之前我们已经实现了ImageClient客户端封装，实现了链式调用的模式，接下来，我们将实现图片接龙功能
 2. 图片接龙功能，即输入一张图片，然后根据图片生成一张新的图片，然后根据新的图片生成一张新的图片，直到到达指定的步骤为止
 3. 该功能需要图片编辑模型，而如果我们想要实现文生图后再图生图，则可以通过在业务层中两次调用客户端实现该操作
-4. 为了依旧保证Client调用的流畅性，且保证参数传递、接龙功能参数传递互不影响，我们可以进行如下改造设计
-5. 原始设计是：通过.param()方法开启参数设置，然后通过.output()方法获取结果
-6. 现在设计为：通过.param()方法开启参数设置，其他的功能不变，添加.solitaire(Integer step)方法，该方法用于设置接龙步骤，随后会获取到List<String>结果
+
+### 5.2 改造思路
+1. 为了依旧保证Client调用的流畅性，且保证参数传递、接龙功能参数传递互不影响，我们可以进行如下改造设计
+2. 原始设计是：通过.param()方法开启参数设置，然后通过.output()方法获取结果
+3. 现在设计为：通过.param()方法开启参数设置，其他的功能不变，添加.solitaire(Integer step)方法，该方法用于设置接龙步骤，随后会获取到List<String>结果
+4. 代码示例
+    ```java
+    /**
+     * 执行连续图像生成操作（接龙模式）
+     *
+     * 该方法会根据设置的参数连续生成指定步数的图像，每一步都会基于前一步的结果进行生成，
+     * 形成图像接龙的效果。每一步生成的图像URL会被记录并返回。
+     *
+     * 实现逻辑：
+     * 1. 验证输入参数step的有效性（非空且在1-7之间）
+     * 2. 当step超过3时给出性能警告
+     * 3. 循环执行step次图像生成：
+     *    - 第一次直接使用当前设置的提示词生成图像
+     *    - 后续每次将上一次生成的图像作为输入图像（image参数）
+     * 4. 记录并返回每一步生成的图像URL
+     *
+     * @param step 连续生成的步数，必须大于0且小于等于7，建议不超过3步以保证性能
+     * @return 包含每步生成图像URL的列表，列表顺序即为生成顺序
+     * @throws IllegalArgumentException 当step为null或不在有效范围内时抛出
+     * @throws RuntimeException 当图像处理或网络请求出现异常时抛出
+     */
+    public List<String> solitaire(Integer step) throws IOException {
+        Assert.notNull(this.model, "model 不得为 null");
+        Assert.notNull(this.image, "image 不得为 null");
+        Assert.notNull(step, "step 不得为 null");
+        Assert.isTrue(step > 0 && step <= 7, "step 必须大于 0 且小于等于 7");
+        LoggerUtils.logWarnIfTrue(step > 3, "step 大于 3 时可能会导致生成图像时间大幅增加");
+
+        List<String> solitaire = new ArrayList<>();
+        for (int i = 0; i < step; i++) {
+            
+            // 从第二步开始，将上一步生成的图像作为输入图像
+            if (i != 0) {
+                String url = solitaire.get(i - 1);
+                File file = ImageUtils.createImageAsUrl(url);
+                this.image = ImageUtils.convert(file);
+            }
+            
+            String output = this.output();
+            log.info("step: {}, output: {}", i + 1, output);
+            solitaire.add(output);
+        }
+        log.info("solitaire: {}", solitaire);
+        return solitaire;
+    }
+    ```
+   
+### 5.3 单元测试提供
+1. 我们通过测试纯图生图，以及先文生图后图生图的结果，并验证接龙功能是否正常
+2. 单元测试类提供
+    ```java
+    /**
+     * 测试图像接龙生成功能
+     *
+     * 该测试方法验证基于现有图片的连续图像生成功能（图像接龙）：
+     * 1. 读取指定的二次元风格图片作为基础图像
+     * 2. 使用 Qwen/Qwen-Image-Edit 模型基于该图像生成配色更加唯美的新图像序列
+     * 3. 应用负面提示词"星球"来排除特定元素
+     * 4. 设置提示词相关性因子为7.5以平衡创造性和遵循提示的程度
+     * 5. 生成包含3个图像的接龙序列
+     *
+     * 此外，还测试了文生图+图生图的组合接龙方式：
+     * 1. 先使用 Qwen/Qwen-Image 模型根据提示生成初始二次元图片
+     * 2. 再使用 Qwen/Qwen-Image-Edit 模型对该图片进行配色优化
+     * 3. 同样生成包含3个图像的接龙序列
+     */
+    @Test
+    void testSolitaire() throws IOException {
+        log.info("接龙测试: 纯图生图");
+        File imageFile = ImageUtils.findImageFile("static/二次元图片.png");
+        String convert = ImageUtils.convert(imageFile);
+    
+        List<String> solitaire = enhancedImageClient.param()
+                .model("Qwen/Qwen-Image-Edit")
+                .prompt("请让图片的配色更加唯美")
+                .image(convert)
+                .negativePrompt("星球")
+                .cfg(7.5)  // 提示词相关性因子
+                .solitaire(3);
+    
+        log.info("solitaire: {}", solitaire);
+    
+        log.info("接龙测试: 文生图+图生图 图像接龙");
+        String output = enhancedImageClient.param()
+                .model("Qwen/Qwen-Image")
+                .prompt("请随机生成原神胡桃的图片")
+                .negativePrompt("星球")
+                .inferenceSteps(20)
+                .output();
+        System.out.println(output);
+        File imageAsUrl = ImageUtils.createImageAsUrl(output);
+        String convertAsUrl = ImageUtils.convert(imageAsUrl);
+        List<String> solitaireAsUrl = enhancedImageClient.param()
+                .model("Qwen/Qwen-Image-Edit")
+                .prompt("请让图片的配色更加唯美")
+                .image(convertAsUrl)
+                .negativePrompt("星球")
+                .cfg(7.5)  // 提示词相关性因子
+                .solitaire(3);
+    
+        log.info("solitaireAsUrl: {}", solitaireAsUrl);
+    }
+    ```
+**经过测试，纯图生图和文生图+图生图的图像接龙功能已经正常实现了。**
