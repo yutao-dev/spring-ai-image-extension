@@ -126,4 +126,39 @@ class EnhancedClientTest {
         
         log.info("solitaireAsUrl: {}", solitaireAsUrl);
     }
+
+
+    /**
+     * 测试图像接龙生成功能（自定义提示词序列）
+     * 
+     * 该测试方法验证基于自定义提示词序列的图像接龙生成功能：
+     * 1. 读取指定的二次元风格图片作为基础图像
+     * 2. 使用 Qwen/Qwen-Image-Edit 模型基于该图像和自定义提示词序列生成新的图像序列
+     * 3. 应用负面提示词"星球"来排除特定元素
+     * 4. 设置提示词相关性因子为7.5以平衡创造性和遵循提示的程度
+     * 5. 生成包含3个图像的接龙序列，每个步骤使用不同的提示词
+     * 
+     * 注意：solitaire方法的提示词参数会覆盖初始设置的prompt参数
+     *
+     * @throws IOException 当读取图片文件失败时抛出此异常
+     */
+    @Test
+    void testSolitaire2() throws IOException {
+        // 读取二次元风格的基础图片
+        File imageFile = ImageUtils.findImageFile("static/二次元图片.png");
+        String convert = ImageUtils.convert(imageFile);
+        
+        // 执行图像接龙生成，使用自定义提示词序列
+        // 注意：solitaire的参数会覆盖prompt参数
+        List<String> solitaire = enhancedImageClient.param()
+                .model("Qwen/Qwen-Image-Edit")
+                .prompt("请让图片的配色更加唯美")
+                .image(convert)
+                .negativePrompt("星球")
+                .cfg(7.5)  // 提示词相关性因子
+                .solitaire(3, List.of("请让图片的配色更加唯美", "请更换图片中人物的衣着"));
+        
+        // 输出生成的图像序列结果
+        log.info("solitaire: {}", solitaire);
+    }
 }

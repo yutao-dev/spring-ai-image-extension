@@ -843,3 +843,91 @@ void testClient() throws IOException {
 1. 当前的功能主要是基于单提示词重复调用，因此我们可以更全面化一些
 2. 我们根据原先的图片接龙功能，参数接受再添加集合形式，通过分步获取集合的提示词，并传入给模型进行生成
 3. 而为了提升鲁棒性，我们将这样定义调用的顺序：顺序后移，如果到下标超过最后一个则直接使用最后一个
+4. 例如：调用步骤为3，提示词为["将图片的饱和度提高“, "将图片的色调提高“],那么3步的提示词为："将图片的饱和度提高“, "将图片的色调提高“，"将图片的饱和度提高“
+5. 在EnhancedClient中新增方法如下
+    ```java
+    /**
+     * 执行连续图像生成操作（接龙模式），每步使用不同的提示词
+     * 
+     * 该方法会根据设置的参数连续生成指定步数的图像，每一步都会基于前一步的结果进行生成，
+     * 并使用传入的提示词列表中的对应提示词。如果提示词数量少于步数，则循环使用提示词列表中的提示词。
+     * 
+     * 实现逻辑：
+     * 1. 验证输入参数的有效性（model、image非空，step在1-7之间，prompts非空）
+     * 2. 当step超过3时给出性能警告
+     * 3. 循环执行step次图像生成：
+     *    - 第一次直接使用当前设置的图像和对应提示词生成图像
+     *    - 后续每次将上一次生成的图像作为输入图像（image参数），并使用对应的提示词
+     * 4. 记录并返回每一步生成的图像URL
+     * 
+     * @param step 连续生成的步数，必须大于0且小于等于7，建议不超过3步以保证性能
+     * @param prompts 每步使用的提示词列表，不能为空
+     * @return 包含每步生成图像URL的列表，列表顺序即为生成顺序
+     * @throws IllegalArgumentException 当参数不符合要求时抛出
+     * @throws RuntimeException 当图像处理或网络请求出现异常时抛出
+     */
+    public List<String> solitaire(Integer step, List<String> prompts) throws IOException { 
+        // 参数验证
+        Assert.notNull(this.model, "model 不得为 null");
+        Assert.notNull(this.image, "image 不得为 null");
+        Assert.isTrue(step > 0 && step <= 7, "step 必须大于 0 且小于等于 7");
+        Assert.notEmpty(prompts, "prompts 列表不能为空");
+        LoggerUtils.logWarnIfTrue(step > 3, "step 大于 3 时可能会导致生成图像时间大幅增加");
+        
+        List<String> solitaire = new ArrayList<>();
+        for (int i = 0; i < step; i++) { 
+            // 从第二步开始，将上一步生成的图像作为输入图像
+            if (i != 0) {
+                String url = solitaire.get(i - 1);
+                File file = ImageUtils.createImageAsUrl(url);
+                this.image = ImageUtils.convert(file);
+            }
+            
+            // 根据当前步骤选择对应的提示词，如果超出提示词列表长度则使用最后一个提示词
+            int promptsSize = prompts.size();
+            this.prompt = prompts.get(Math.min(i, promptsSize - 1));
+            
+            // 生成图像并记录结果
+            String output = this.output();
+            log.info("step: {}, output: {}, prompt: {}", i + 1, output, this.prompt);
+            solitaire.add(output);
+        }
+        
+        log.info("solitaire: {}, prompts: {}", solitaire, prompts);
+        return solitaire;
+    }
+    ```
+6. 单元测试方法如下
+    ```java
+    /**
+     * 测试图像接龙生成功能（自定义提示词序列）
+     * 
+     * 该测试方法验证基于自定义提示词序列的图像接龙生成功能：
+     * 1. 读取指定的二次元风格图片作为基础图像
+     * 2. 使用 Qwen/Qwen-Image-Edit 模型基于该图像和自定义提示词序列生成新的图像序列
+     * 3. 应用负面提示词"星球"来排除特定元素
+     * 4. 设置提示词相关性因子为7.5以平衡创造性和遵循提示的程度
+     * 5. 生成包含3个图像的接龙序列，每个步骤使用不同的提示词
+     * 
+     * 注意：solitaire方法的提示词参数会覆盖初始设置的prompt参数
+     */
+    @Test
+    void testSolitaire2() throws IOException {
+        // 读取二次元风格的基础图片
+        File imageFile = ImageUtils.findImageFile("static/二次元图片.png");
+        String convert = ImageUtils.convert(imageFile);
+        
+        // 执行图像接龙生成，使用自定义提示词序列
+        // 注意：solitaire的参数会覆盖prompt参数
+        List<String> solitaire = enhancedImageClient.param()
+                .model("Qwen/Qwen-Image-Edit")
+                .prompt("请让图片的配色更加唯美")
+                .image(convert)
+                .negativePrompt("星球")
+                .cfg(7.5)  // 提示词相关性因子
+                .solitaire(3, List.of("请让图片的配色更加唯美", "请更换图片中人物的衣着"));
+        
+        // 输出生成的图像序列结果
+        log.info("solitaire: {}", solitaire);
+    }
+    ```
