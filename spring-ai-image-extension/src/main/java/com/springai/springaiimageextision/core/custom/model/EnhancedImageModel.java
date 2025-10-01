@@ -175,7 +175,7 @@ public class EnhancedImageModel implements ImageModel {
 				.seed(BeanUtils.nullThenChooseOther(enhancedImageOptions.getSeed(), this.defaultOptions.getSeed(), Long.class))
 				.guidanceScale(BeanUtils.nullThenChooseOther(enhancedImageOptions.getGuidanceScale(), this.defaultOptions.getGuidanceScale(), Integer.class))
 				.inferenceSteps(BeanUtils.nullThenChooseOther(enhancedImageOptions.getInferenceSteps(), this.defaultOptions.getInferenceSteps(), Integer.class))
-				.cfg(BeanUtils.nullThenChooseOther(enhancedImageOptions.getCfg(), this.defaultOptions.getCfg(), String.class))
+				.cfg(BeanUtils.nullThenChooseOther(enhancedImageOptions.getCfg(), this.defaultOptions.getCfg(), Double.class))
 				.build();
 	}
 

@@ -61,7 +61,7 @@ public class EnhancedImageClient {
         /** 指导强度，控制提示词对生成过程的影响程度 */
         private Integer guidanceScale;
         /** 分类器自由引导比例 */
-        private String cfg;
+        private Double cfg;
         /** 推理步数，控制生成过程的迭代次数 */
         private Integer inferenceSteps;
         
@@ -225,7 +225,7 @@ public class EnhancedImageClient {
          * @param cfg 分类器自由引导比例
          * @return 参数构建器实例
          */
-        public ParamBuilder cfg(String cfg) {
+        public ParamBuilder cfg(Double cfg) {
             this.cfg = cfg;
             return this;
         }

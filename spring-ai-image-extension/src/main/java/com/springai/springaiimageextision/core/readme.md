@@ -580,13 +580,94 @@ void testModel() throws IOException {
 
 ### 3.1 前言
 
-1. 在前面的章节中，我们已经完成了从底层 API 到顶层 ImageModel 的链路改造。接下来，我们将进一步提升抽象层级，创建一个 EnhancedImageClient，将 ImageModel 封装成更易用的客户端形式。
-2. EnhancedImageClient 的设计将参考 ChatClient 的封装逻辑，包括但不限于链式调用封装、提示词优化等特性，以提供更加流畅和直观的开发体验。
+在前面的章节中，我们已经完成了从底层 API 到顶层 ImageModel 的链路改造。接下来，我们将进一步提升抽象层级，创建一个 EnhancedImageClient，将 ImageModel 封装成更易用的客户端形式。
+
+EnhancedImageClient 的设计将参考 ChatClient 的封装逻辑，包括但不限于链式调用封装、提示词优化等特性，以提供更加流畅和直观的开发体验。
 
 ### 3.2 初步构建
 
-1. EnhancedImageClient 的初步构建将从基础的链式调用功能开始实现
-2. 首先在 core 包下创建 client 子包，作为客户端功能的统一入口点
-3. 创建 EnhancedImageClient 类，作为图像生成功能的主要交互接口
-4. 设计链式调用方法结构，使开发者能够通过简洁的方式调用图像生成服务：
-   - 使用示例：`enhancedImageClient.param().prompt("生成一张小猫图片").output();`
+EnhancedImageClient 的初步构建将从基础的链式调用功能开始实现：
+
+1. 首先在 core 包下创建 client 子包，作为客户端功能的统一入口点
+2. 创建 EnhancedImageClient 类，作为图像生成功能的主要交互接口
+3. 设计链式调用方法结构，使开发者能够通过简洁的方式调用图像生成服务：
+
+   // 使用示例
+   enhancedImageClient.param()
+       .prompt("生成一张小猫图片")
+       .output();
+
+### 3.3 单元测试类测试
+
+我们依旧是针对文生图以及图生图两种模式进行测试，通过单元测试来验证我们的功能是否正常。
+
+#### 配置 EnhancedImageClient 实例
+
+通过 config 配置，配置出一个 EnhancedImageClient 实例：
+```java
+
+/**
+ * 创建EnhancedImageClient实例
+ * 提供图像生成API的访问入口
+ *
+ * @return EnhancedImageClient 实例
+ */
+@Bean
+public EnhancedImageClient enhancedImageClient() {
+   return new EnhancedImageClient(enhancedImageModel());
+}
+```
+
+#### 测试方法
+
+测试方法如下：
+```java
+
+/**
+  * 测试图像生成功能和图像编辑功能
+  * 
+  * 该测试方法主要验证两个功能：
+  * 1. 使用 Qwen/Qwen-Image 模型生成星空图片
+  * 2. 使用 Qwen/Qwen-Image-Edit 模型对现有图片进行美化处理
+  * 
+  * 测试流程：
+  * 1. 调用图像生成接口，生成一张星空图片，排除星球元素
+  * 2. 读取本地图片文件并转换为Base64编码
+  * 3. 调用图像编辑接口，对读取的图片进行美化处理
+  * 4. 验证两个接口的输出均不为空
+  */
+@Test
+void testClient() throws IOException {
+    // 生成星空图片，使用负面提示词排除星球元素
+    String output = enhancedImageClient.param()
+            .model("Qwen/Qwen-Image")
+            .prompt("请生成一张优美的星空图片")
+            .negativePrompt("星球")
+            .cfg(7.5)  // 设置提示词相关性因子
+            .output();
+
+    // 读取本地图片文件并转换为Base64编码，用于后续编辑
+    File imageFile = ImageUtils.findImageFile("static/风景图片01.png");
+    String convert = ImageUtils.convert(imageFile);
+    
+    // 对读取的图片进行美化处理
+    String outputEdit = enhancedImageClient.param()
+            .model("Qwen/Qwen-Image-Edit")
+            .prompt("请你美化当前的图片")
+            .cfg(8.0)  // 设置提示词相关性因子
+            .image(convert)  // 提供待编辑的图片数据
+            .output();
+    
+    // 验证生成和编辑结果均不为空
+    Assertions.assertNotNull(output);
+    Assertions.assertNotNull(outputEdit);
+    
+    // 输出结果到控制台以便查看
+    System.out.println(output);
+    System.out.println(outputEdit);
+}
+```
+
+经过测试，方法均可跑通。
+
+**至此，EnhancedImageClient 的初步构建和链式调用功能已实现，接下来，我们将继续完善功能，添加更多特性。**

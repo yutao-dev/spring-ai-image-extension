@@ -1,5 +1,6 @@
 package com.springai.springaiimageextision.core.config;
 
+import com.springai.springaiimageextision.core.client.EnhancedImageClient;
 import com.springai.springaiimageextision.core.custom.api.EnhancedImageApi;
 import com.springai.springaiimageextision.core.custom.bean.ImageOptionsProperties;
 import com.springai.springaiimageextision.core.custom.model.EnhancedImageModel;
@@ -94,5 +95,16 @@ public class EnhancedImageModelConfig {
     public EnhancedImageModel enhancedImageModel() {
         log.info("Creating EnhancedImageModel with configured API and options");
         return new EnhancedImageModel(enhancedImageApi(), enhancedImageOptions(), RetryUtils.DEFAULT_RETRY_TEMPLATE);
+    }
+
+    /**
+     * 创建EnhancedImageClient实例
+     * 提供图像生成API的访问入口
+     *
+     * @return EnhancedImageClient 实例
+     */
+    @Bean
+    public EnhancedImageClient enhancedImageClient() {
+        return new EnhancedImageClient(enhancedImageModel());
     }
 }

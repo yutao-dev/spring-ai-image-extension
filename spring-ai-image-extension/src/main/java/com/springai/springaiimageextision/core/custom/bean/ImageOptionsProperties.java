@@ -101,7 +101,7 @@ public class ImageOptionsProperties {
     /**
      * 自定义字段，用于指定 cfg，影响图文一致性，值越高则生成图像越有个性化，建议≥4.0
      */
-    private String cfg;
+    private Double cfg;
 
     /**
      * 自定义字段，用于指定推理步骤数，用于控制生成图像的随机性，值越高则生成图像越随机

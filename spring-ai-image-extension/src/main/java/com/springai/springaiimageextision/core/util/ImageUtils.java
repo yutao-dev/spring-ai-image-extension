@@ -1,8 +1,11 @@
 package com.springai.springaiimageextision.core.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 
 import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
@@ -19,6 +22,20 @@ public class ImageUtils {
      * 私有构造函数，防止实例化
      */
     private ImageUtils() {}
+
+    /**
+     * 查找静态资源目录下的图片文件
+     *
+     * @param imagePath 图片文件路径，相对于静态资源目录
+     * @return 图片文件对象
+     */
+    public static File findImageFile(String imagePath) {
+        ClassLoader classLoader = ImageUtils.class.getClassLoader();
+        URL resource = classLoader.getResource(imagePath);
+        Assert.notNull(resource, "没有找到图片");
+        String filePath = java.net.URLDecoder.decode(resource.getFile(), StandardCharsets.UTF_8);
+        return new File(filePath);
+    }
 
     /**
      * 将图片文件转换为Base64编码的数据URL格式
