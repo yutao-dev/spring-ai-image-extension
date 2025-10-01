@@ -106,4 +106,12 @@ SpringAI 项目原生功能并未包含图像生成功能，如需扩展其他�
 3. 在此过程中，我们需要提供一份 `ImageUtils` 工具类用于图像编码。
 4. 我们此次针对文生图、图生图进行了统一测试，没有出现明显的 bug。
 
-至此，ImageOptions 层改造工作已完成。
+**至此，ImageOptions 层改造工作已完成。**
+
+### 2.3 ImageModel 层改造
+#### 2.3.1 前言
+1. 在之前我们已经进行了Api与Options层的改造，本章节我们将围绕ImageModel进行改造，围绕ImageModel.call()方法进行
+2. 有关这一部分的源码阅读以及改造流程的思路梳理，可以移步并参考[源文档](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)的6.4章节
+3. 源文档给出了详细的源码阅读方法论梳理，并给出详细的改造步骤以及踩坑记录，我们将根据源文档，将流程梳理成一步到位的方法，并给出相应的代码实现
+
+   
