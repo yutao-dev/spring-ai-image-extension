@@ -574,5 +574,16 @@ void testModel() throws IOException {
 
 **经过测试验证，ImagePrompt 可以正确覆盖默认提示词，并生成不同的图片结果。**
 
-**至此，Spring AI Image API 集成和文生图功能已初步完成！**
-   
+**至此，Spring AI Image API 集成和文生图、图生图功能已初步完成！**
+
+## 3. EnhancedImageClient 图片模型客户端封装
+### 3.1 前言
+1. 在之前我们已经进行从底层Api到顶层ImageModel的链路改造，后续我们将抽象层级再次提高，创建一个EnhancedImageClient，将ImageModel封装成Client
+2. EnhancedImageClient将会参考ChatClient的封装构造逻辑，其中包括但不仅限于链式调用封装、提示词优化等功能
+
+### 3.2 初步构建
+1. 初步构建EnhancedImageClient，我们先从最基础的链式调用开始
+2. 首先在core包下创建client包，该包作为客户端统一的入口
+3. 创建EnhancedImageClient类
+4. 创建链式调用方法形式
+   - 在该类中，可以通过以下形式进行使用：enhancedImageClient.param().prompt("生成一张小猫图片").output();
