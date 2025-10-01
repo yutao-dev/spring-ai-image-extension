@@ -1,0 +1,40 @@
+# Core 核心包
+
+## 1. 前言
+
+本包致力于提供增强的图像处理能力，主要包含以下核心组件：
+
+- ✅ **增强图像模型集成** - 对现有图像模型进行功能扩展和优化
+- 🔄 **ImageClient 客户端工具** - 基于增强功能构建，提供更丰富的调用方式和更好的用户体验
+- 🔌 **标准化接口服务** - 以统一的接口形式对外提供服务，便于开发者快速集成和使用
+- 🧪 **完整单元测试** - 所有类均配备完整的单元测试，确保功能稳定性和代码可靠性
+
+## 2. 改造过程
+
+### 2.1 API 改造
+
+#### 2.1.1 获取原始代码
+
+为实现良好的扩展性与向后兼容性，我们执行了以下初始化操作：
+
+1. 复制原始 `OpenAiImageApi.class` 源码作为基础模板
+2. 将类名从 `OpenAiImageApi.class` 更改为 `EnhancedImageApi.class`
+3. 源码获取路径（GitHub）：[OpenAI Image API](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiImageApi.java)
+4. 根据需要可能会继续复制其他相关源码，当前阶段优先确保 API 层代码能够正常运行和调试
+
+> ⚠️ **重要提示**：后续将在此基础之上进行进一步的适配与功能增强，以支持更多种类的图像模型和服务提供商。
+
+#### 2.2.2 进行适配化改造
+
+根据来源文档提供的改造思路，我们进行了以下关键步骤的改造（详细内容请参考飞书文档: [SpringAI模型调用、自定义集群深入探索](https://dcn7850oahi9.feishu.cn/docx/DDehdPBMSoGTycxmFTLcER4In0F?from=from_copylink)）：
+
+1. 移除原始类中的内嵌请求参数类 **OpenAiImageRequest**，其他部分暂不改造，留待后续优化
+2. 解决 `createImage()` 方法出现的编译错误
+3. 复制原始类 [OpenAiImageOptions](https://github.com/spring-projects/spring-ai/blob/1.0.0/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiImageOptions.java)
+4. 将类名修改为 `EnhancedImageOptions`
+5. 添加 `@Data` 注解并移除冗余的原始 setter 与 getter 方法，为后续动态字段扩展提供便利
+6. 添加 `@Builder`、`@NoArgsConstructor`、`@AllArgsConstructor` 注解。由于 `@Builder` 会生成全参构造函数并覆盖默认无参构造函数，而显式声明无参构造函数又会覆盖 `@Builder` 生成的构造函数，因此需要同时引入这三个注解
+7. 修改 `EnhancedImageApi.createImage()` 方法，将其入参类型更改为 `EnhancedImageOptions`
+8. 此时会遇到 `Assert.hasLength(imageOptions.prompt(), "提示词不能为空。")` 编译错误。根据来源文档介绍，我们将 Options 作为请求参数直接传递，因此需要在 `EnhancedImageOptions` 中优先添加 prompt 请求参数以完成适配化改造，随后即可修改相关代码完成适配
+
+**至此，API 层的初始化改造工作已顺利完成**
