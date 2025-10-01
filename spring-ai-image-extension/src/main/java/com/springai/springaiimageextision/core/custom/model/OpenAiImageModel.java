@@ -27,14 +27,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.Assert;
 
+
 /**
- * OpenAiImageModel is a class that implements the ImageModel interface. It provides a
- * client for calling the OpenAI image generation API.
+ * OpenAiImageModel 是一个实现 ImageModel 接口的类。它提供了一个客户端用于调用 OpenAI 图像生成 API。
  *
- * @author Mark Pollack
- * @author Christian Tzolov
- * @author Hyunjoon Choi
- * @author Thomas Vitale
+ * @author 王玉涛
  * @since 0.8.0
  */
 public class OpenAiImageModel implements ImageModel {
@@ -44,65 +41,62 @@ public class OpenAiImageModel implements ImageModel {
 	private static final ImageModelObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultImageModelObservationConvention();
 
 	/**
-	 * The default options used for the image completion requests.
+	 * 用于图像完成请求的默认选项。
 	 */
 	private final OpenAiImageOptions defaultOptions;
 
 	/**
-	 * The retry template used to retry the OpenAI Image API calls.
+	 * 用于重试 OpenAI 图像 API 调用的重试模板。
 	 */
 	private final RetryTemplate retryTemplate;
 
 	/**
-	 * Low-level access to the OpenAI Image API.
+	 * 对 OpenAI 图像 API 的低级访问。
 	 */
 	private final OpenAiImageApi openAiImageApi;
 
 	/**
-	 * Observation registry used for instrumentation.
+	 * 用于仪器仪表的观察注册表。
 	 */
 	private final ObservationRegistry observationRegistry;
 
 	/**
-	 * Conventions to use for generating observations.
+	 * 用于生成观察数据的约定。
 	 */
 	private ImageModelObservationConvention observationConvention = DEFAULT_OBSERVATION_CONVENTION;
 
 	/**
-	 * Creates an instance of the OpenAiImageModel.
-	 * @param openAiImageApi The OpenAiImageApi instance to be used for interacting with
-	 * the OpenAI Image API.
-	 * @throws IllegalArgumentException if openAiImageApi is null
+	 * 创建 OpenAiImageModel 的实例。
+	 * @param openAiImageApi 用于与 OpenAI 图像 API 交互的 OpenAiImageApi 实例。
+	 * @throws IllegalArgumentException 如果 openAiImageApi 为 null
 	 */
 	public OpenAiImageModel(OpenAiImageApi openAiImageApi) {
 		this(openAiImageApi, OpenAiImageOptions.builder().build(), RetryUtils.DEFAULT_RETRY_TEMPLATE);
 	}
 
 	/**
-	 * Initializes a new instance of the OpenAiImageModel.
-	 * @param openAiImageApi The OpenAiImageApi instance to be used for interacting with
-	 * the OpenAI Image API.
-	 * @param options The OpenAiImageOptions to configure the image model.
-	 * @param retryTemplate The retry template.
+	 * 初始化 OpenAiImageModel 的新实例。
+	 * @param openAiImageApi 用于与 OpenAI 图像 API 交互的 OpenAiImageApi 实例。
+	 * @param options 用于配置图像模型的 OpenAiImageOptions。
+	 * @param retryTemplate 重试模板。
 	 */
 	public OpenAiImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate) {
 		this(openAiImageApi, options, retryTemplate, ObservationRegistry.NOOP);
 	}
 
 	/**
-	 * Initializes a new instance of the OpenAiImageModel.
-	 * @param openAiImageApi The OpenAiImageApi instance to be used for interacting with
-	 * the OpenAI Image API.
-	 * @param options The OpenAiImageOptions to configure the image model.
-	 * @param retryTemplate The retry template.
-	 * @param observationRegistry The ObservationRegistry used for instrumentation.
+	 * 初始化 OpenAiImageModel 的新实例。
+	 * @param openAiImageApi 用于与 OpenAI 图像 API 交互的 OpenAiImageApi 实例。
+	 * @param options 用于配置图像模型的 OpenAiImageOptions。
+	 * @param retryTemplate 重试模板。
+	 * @param observationRegistry 用于仪器仪表的 ObservationRegistry。
 	 */
 	public OpenAiImageModel(OpenAiImageApi openAiImageApi, OpenAiImageOptions options, RetryTemplate retryTemplate,
 			ObservationRegistry observationRegistry) {
-		Assert.notNull(openAiImageApi, "OpenAiImageApi must not be null");
-		Assert.notNull(options, "options must not be null");
-		Assert.notNull(retryTemplate, "retryTemplate must not be null");
-		Assert.notNull(observationRegistry, "observationRegistry must not be null");
+		Assert.notNull(openAiImageApi, "OpenAiImageApi 不能为空");
+		Assert.notNull(options, "options 不能为空");
+		Assert.notNull(retryTemplate, "retryTemplate 不能为空");
+		Assert.notNull(observationRegistry, "observationRegistry 不能为空");
 		this.openAiImageApi = openAiImageApi;
 		this.defaultOptions = options;
 		this.retryTemplate = retryTemplate;
@@ -111,8 +105,8 @@ public class OpenAiImageModel implements ImageModel {
 
 	@Override
 	public ImageResponse call(ImagePrompt imagePrompt) {
-		// Before moving any further, build the final request ImagePrompt,
-		// merging runtime and default options.
+		// 在继续之前，构建最终的请求 ImagePrompt，
+		// 合并运行时和默认选项。
 		ImagePrompt requestImagePrompt = buildRequestImagePrompt(imagePrompt);
 
 		OpenAiImageApi.OpenAiImageRequest imageRequest = createRequest(requestImagePrompt);
@@ -151,7 +145,7 @@ public class OpenAiImageModel implements ImageModel {
 			OpenAiImageApi.OpenAiImageRequest openAiImageRequest) {
 		OpenAiImageApi.OpenAiImageResponse imageApiResponse = imageResponseEntity.getBody();
 		if (imageApiResponse == null) {
-			logger.warn("No image response returned for request: {}", openAiImageRequest);
+			logger.warn("请求没有返回图像响应: {}", openAiImageRequest);
 			return new ImageResponse(List.of());
 		}
 
@@ -166,7 +160,7 @@ public class OpenAiImageModel implements ImageModel {
 	}
 
 	private ImagePrompt buildRequestImagePrompt(ImagePrompt imagePrompt) {
-		// Process runtime options
+		// 处理运行时选项
 		OpenAiImageOptions runtimeOptions = null;
 		if (imagePrompt.getOptions() != null) {
 			runtimeOptions = ModelOptionsUtils.copyToTarget(imagePrompt.getOptions(), ImageOptions.class,
@@ -174,7 +168,7 @@ public class OpenAiImageModel implements ImageModel {
 		}
 
 		OpenAiImageOptions requestOptions = runtimeOptions == null ? this.defaultOptions : OpenAiImageOptions.builder()
-			// Handle portable image options
+			// 处理可移植的图像选项
 			.model(ModelOptionsUtils.mergeOption(runtimeOptions.getModel(), this.defaultOptions.getModel()))
 			.N(ModelOptionsUtils.mergeOption(runtimeOptions.getN(), this.defaultOptions.getN()))
 			.responseFormat(ModelOptionsUtils.mergeOption(runtimeOptions.getResponseFormat(),
@@ -182,7 +176,7 @@ public class OpenAiImageModel implements ImageModel {
 			.width(ModelOptionsUtils.mergeOption(runtimeOptions.getWidth(), this.defaultOptions.getWidth()))
 			.height(ModelOptionsUtils.mergeOption(runtimeOptions.getHeight(), this.defaultOptions.getHeight()))
 			.style(ModelOptionsUtils.mergeOption(runtimeOptions.getStyle(), this.defaultOptions.getStyle()))
-			// Handle OpenAI specific image options
+			// 处理 OpenAI 特定的图像选项
 			.quality(ModelOptionsUtils.mergeOption(runtimeOptions.getQuality(), this.defaultOptions.getQuality()))
 			.user(ModelOptionsUtils.mergeOption(runtimeOptions.getUser(), this.defaultOptions.getUser()))
 			.build();
@@ -191,11 +185,11 @@ public class OpenAiImageModel implements ImageModel {
 	}
 
 	/**
-	 * Use the provided convention for reporting observation data
-	 * @param observationConvention The provided convention
+	 * 使用提供的约定来报告观察数据
+	 * @param observationConvention 提供的约定
 	 */
 	public void setObservationConvention(ImageModelObservationConvention observationConvention) {
-		Assert.notNull(observationConvention, "observationConvention cannot be null");
+		Assert.notNull(observationConvention, "observationConvention 不能为空");
 		this.observationConvention = observationConvention;
 	}
 
