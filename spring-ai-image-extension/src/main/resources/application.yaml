@@ -16,6 +16,11 @@ spring:
           model: Qwen/Qwen-Image
           # 设置生成图像的尺寸为1328x1328像素，注意，具体参数根据自身选择厂商提供的API文档为准
           size: 1328x1328
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 30MB
+
 ai:
   enhanced:
     image:

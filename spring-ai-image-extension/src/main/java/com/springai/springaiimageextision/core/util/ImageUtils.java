@@ -2,6 +2,7 @@ package com.springai.springaiimageextision.core.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.net.URL;
@@ -85,6 +86,8 @@ public class ImageUtils {
      * @return MIME类型字符串，格式为 "image/[extension]"
      */
     private static String getMimeType(String filename) {
+        Assert.notNull(filename, "文件名不能为空");
+        Assert.hasText(filename, "文件名不能为空");
         // 提取文件扩展名
         int lastDotIndex = filename.lastIndexOf('.');
         if (lastDotIndex != -1 && lastDotIndex < filename.length() - 1) {
@@ -92,5 +95,60 @@ public class ImageUtils {
         }
         // 返回标准MIME类型格式
         return "image/" + filename;
+    }
+
+    /**
+     * 获取文件类型
+     *
+     * @param originalFilename 文件名
+     * @return 文件类型
+     */
+    public static String getFileType(String originalFilename) {
+        Assert.notNull(originalFilename, "文件名不能为空");
+        Assert.hasText(originalFilename, "文件名不能为空");
+        return originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+    }
+
+    /**
+     * 判断文件类型是否为图片
+     *
+     * @param type 文件类型
+     */
+    public static void isImage(String type) {
+        Assert.isTrue("png".equals(type) || "jpg".equals(type) || "jpeg".equals(type) || "webp".equals(type), "类型错误");
+    }
+
+    /**
+     * 获取文件类型并判断是否为图片
+     *
+     * @param originalFilename 文件名
+     * @param isOriginalName 是否使用原始文件名
+     */
+    public static void isImage(String originalFilename, boolean isOriginalName) {
+        if (isOriginalName) {
+            originalFilename = getFileType(originalFilename);
+        }
+        isImage(originalFilename);
+    }
+
+public static File convertToFile(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("文件不能为空");
+        }
+
+        try {
+            // 创建临时文件
+            String originalFilename = file.getOriginalFilename();
+            String fileType = getFileType(originalFilename);
+            File tempFile = File.createTempFile("temp_", "." + fileType);
+            
+            // 将MultipartFile写入临时文件
+            file.transferTo(tempFile);
+            
+            return tempFile;
+        } catch (IOException e) {
+            log.error("将MultipartFile转换为File时发生错误", e);
+            throw new IOException("文件转换失败", e);
+        }
     }
 }

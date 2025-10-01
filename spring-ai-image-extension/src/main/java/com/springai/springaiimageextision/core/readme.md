@@ -692,3 +692,34 @@ void testClient() throws IOException {
 |     EnhancedImageApi        |
 +-----------------------------+
 ```
+
+## 4. Web接口提供
+### 4.1 前言
+*    在之前的章节，我们已经实现了从Api底层到Client顶层的全链路改造+封装
+*    接下来，我们将通过Web接口，提供可以根据是否上传图片，自动选择图文生图或者图生图的功能
+
+### 4.2 接口文档设计
+- 接口uri: /api/core/images
+- 请求方式：POST
+- 参数：
+  - file：图片文件
+  - prompt：提示词
+- 返回参数：url string类型
+
+### 4.3 创建Web服务
+1. 创建[EnhancedImageController.java](application/controller/EnhancedImageController.java)
+2. 创建[EnhancedImageService.java](application/service/EnhancedImageService.java)
+3. 在[ImageUtils.java](util/ImageUtils.java)中添加增强方法方法
+
+### 4.4 测试接口
+1. 我们分别测试上传于不上传图片的两种情况，测试接口是否正常
+2. 我们经过测试发现图片很容易超出大小限制，所以我们通过配置文件增大图片大小限制
+3. 并且请求本身也会超出限制，所以我们也通过配置文件增大请求大小限制
+    ```yaml
+    spring:
+      servlet:
+        multipart:
+          max-file-size: 30MB
+          max-request-size: 30MB
+    ````
+4. 经过测试，接口可以测通，需要注意文件大小、类型检测，这里不应该由ImageClient客户端检测，而是在业务层进行检测
